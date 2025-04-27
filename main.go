@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -44,6 +45,7 @@ func sendPoll(JID types.JID, headline string, optionNames []string) {
 	client := whatsmeow.NewClient(deviceStore, clientLog)
 	client.AddEventHandler(eventHandler)
 
+	// handle login via QR
 	if client.Store.ID == nil {
 		fmt.Println("Client store ID is nil, scanning QR")
 		// No ID stored, new login
@@ -83,10 +85,11 @@ func sendPoll(JID types.JID, headline string, optionNames []string) {
 	fmt.Println("Created Poll Message succuessfully  : ", pollMessage)
 
 	_, err = client.SendMessage(context.Background(), JID, pollMessage)
+	// FIXME showing error even when successful
 	if err != nil {
 		fmt.Println("Sent Poll Succuessfully ", JID)
 	} else {
-		fmt.Println("Failed to Send Poll", JID)
+		fmt.Println("Failed to Send Poll", JID, err)
 
 	}
 
@@ -102,24 +105,61 @@ func sendPoll(JID types.JID, headline string, optionNames []string) {
 }
 
 func main() {
+	var jidStr, header, optionsStr, text string
+	//var message *waE2E.Message
 	cmd := &cli.Command{
-		Action: func(ctx context.Context, cmd *cli.Command) error {
-			// parse JID
-			strJID := cmd.Args().First() + "@g.us" // use id field
-			var JID types.JID
-			JID, err := types.ParseJID(strJID)
-			if err != nil {
-				fmt.Println("Failed to parse JID: ", strJID)
-			} else {
-				fmt.Println("Parsed JID correctly", JID)
-
-			}
-			var optionNames []string
-			optionNames = append(optionNames, "Ja")
-			optionNames = append(optionNames, "Nein")
-			headline := "Wer kommt Samstag (18h)? Dauerzahler haben Vorrang"
-			sendPoll(JID, headline, optionNames)
-			return nil
+		Commands: []*cli.Command{
+			{
+				Name:  "message",
+				Usage: "send a message using <JID> <MESSAGE>",
+				Arguments: []cli.Argument{
+					&cli.StringArg{Name: "jid", Destination: &jidStr},
+					&cli.StringArg{Name: "message", Destination: &text},
+				},
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					// parse JID
+					var JID types.JID
+					JID, err := types.ParseJID(jidStr)
+					if err != nil {
+						log.Fatal("Failed to parse JID: ", jidStr)
+					} else {
+						log.Println("Parsed JID correctly", JID)
+					}
+					return nil
+				},
+			},
+			{
+				Name:  "getgroups",
+				Usage: "print all available group info",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					return nil
+				},
+			},
+			{
+				Name:  "poll",
+				Usage: "send a poll using <JID> <HEADER> <OPTIONS>",
+				Arguments: []cli.Argument{
+					&cli.StringArg{Name: "jid", Destination: &jidStr}, // use id field of group
+					&cli.StringArg{Name: "header", Destination: &header},
+					&cli.StringArg{Name: "options", Destination: &optionsStr},
+				},
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					// parse JID
+					if !strings.HasSuffix(jidStr, "@g.us") {
+						jidStr = jidStr + "@g.us"
+					}
+					var JID types.JID
+					JID, err := types.ParseJID(jidStr)
+					if err != nil {
+						log.Fatal("Failed to parse JID: ", jidStr)
+					} else {
+						log.Println("Parsed JID correctly", JID)
+					}
+					var options = strings.Fields(optionsStr)
+					sendPoll(JID, header, options)
+					return nil
+				},
+			},
 		},
 	}
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
