@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -80,7 +79,7 @@ func initClient() (*whatsmeow.Client, *sqlstore.Container, waLog.Logger) {
 }
 
 func main() {
-	var jidStr, header, optionsStr, text string
+	var jidStr, header, text string
 	var message *waE2E.Message
 	var client *whatsmeow.Client
 	var container *sqlstore.Container
@@ -122,12 +121,11 @@ func main() {
 				Arguments: []cli.Argument{
 					&cli.StringArg{Name: "jid", Destination: &jidStr}, // use id field of group
 					&cli.StringArg{Name: "header", Destination: &header},
-					&cli.StringArg{Name: "options", Destination: &optionsStr},
+					&cli.StringArgs{Name: "options", Min: 2, Max: -1},
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					// parse JID
-					var options = strings.Fields(optionsStr)
-					message = client.BuildPollCreation(header, options, 1)
+					message = client.BuildPollCreation(header, cmd.StringArgs("options"), 1)
 					return nil
 				},
 			},
