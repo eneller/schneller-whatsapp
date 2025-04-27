@@ -73,6 +73,11 @@ func sendPoll(JID types.JID, headline string, optionNames []string) {
 		}
 	}
 
+	/*
+		client.SendMessage(context.Background(), JID, &waE2E.Message{
+			Conversation: proto.String("Hello, World!"),
+		})
+	*/
 	pollMessage := client.BuildPollCreation(headline, optionNames, 1)
 
 	fmt.Println("Created Poll Message succuessfully  : ", pollMessage)
@@ -85,6 +90,7 @@ func sendPoll(JID types.JID, headline string, optionNames []string) {
 
 	}
 
+	//fmt.Println(client.GetJoinedGroups())
 	time.Sleep(5 * time.Second)
 	// Listen to Ctrl+C (you can also do something else that prevents the program from exiting)
 	// c := make(chan os.Signal, 1)
@@ -99,7 +105,7 @@ func main() {
 	cmd := &cli.Command{
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			// parse JID
-			strJID := "XXXXXXXX@g.us"
+			strJID := cmd.Args().First() + "@g.us" // use id field
 			var JID types.JID
 			JID, err := types.ParseJID(strJID)
 			if err != nil {
@@ -109,9 +115,9 @@ func main() {
 
 			}
 			var optionNames []string
-			optionNames = append(optionNames, "O1")
-			optionNames = append(optionNames, "O2")
-			headline := "Test"
+			optionNames = append(optionNames, "Ja")
+			optionNames = append(optionNames, "Nein")
+			headline := "Wer kommt Samstag (18h)? Dauerzahler haben Vorrang"
 			sendPoll(JID, headline, optionNames)
 			return nil
 		},
