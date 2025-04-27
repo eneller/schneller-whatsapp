@@ -3,6 +3,8 @@
 !/**/
 !*.*
 !Makefile
+# Output XMLs
+*.xml
 # Created by https://www.toptal.com/developers/gitignore/api/database,go,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=database,go,visualstudiocode
 
