@@ -13,10 +13,12 @@ import (
 	"github.com/mdp/qrterminal/v3"
 	"github.com/urfave/cli/v3"
 	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
+	"google.golang.org/protobuf/proto"
 )
 
 func eventHandler(evt interface{}) {
@@ -28,7 +30,7 @@ func eventHandler(evt interface{}) {
 	}
 }
 
-func sendPoll(JID types.JID, headline string, optionNames []string) {
+func initClient() (*whatsmeow.Client, *sqlstore.Container, waLog.Logger) {
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
 	// Make sure you add appropriate DB connector imports, e.g. github.com/mattn/go-sqlite3 for SQLite
 	container, err := sqlstore.New("sqlite3", "file:sqlite3.db?_foreign_keys=on", dbLog)
@@ -74,40 +76,17 @@ func sendPoll(JID types.JID, headline string, optionNames []string) {
 			panic(err)
 		}
 	}
-
-	/*
-		client.SendMessage(context.Background(), JID, &waE2E.Message{
-			Conversation: proto.String("Hello, World!"),
-		})
-	*/
-	pollMessage := client.BuildPollCreation(headline, optionNames, 1)
-
-	fmt.Println("Created Poll Message succuessfully  : ", pollMessage)
-
-	_, err = client.SendMessage(context.Background(), JID, pollMessage)
-	// FIXME showing error even when successful
-	if err != nil {
-		fmt.Println("Sent Poll Succuessfully ", JID)
-	} else {
-		fmt.Println("Failed to Send Poll", JID, err)
-
-	}
-
-	//fmt.Println(client.GetJoinedGroups())
-	time.Sleep(5 * time.Second)
-	// Listen to Ctrl+C (you can also do something else that prevents the program from exiting)
-	// c := make(chan os.Signal, 1)
-	// signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	// <-c
-
-	client.Disconnect()
-	container.Close()
+	return client, container, dbLog
 }
 
 func main() {
 	var jidStr, header, optionsStr, text string
-	//var message *waE2E.Message
+	var message *waE2E.Message
+	var client *whatsmeow.Client
+	var container *sqlstore.Container
+	//var dbLog waLog.Logger
 	cmd := &cli.Command{
+		Usage: "Run WhatsApp actions from your CLI. User JID has to end with '@s.whatsapp.net', Group ID with '@g.us'",
 		Commands: []*cli.Command{
 			{
 				Name:  "message",
@@ -125,6 +104,7 @@ func main() {
 					} else {
 						log.Println("Parsed JID correctly", JID)
 					}
+					message = &waE2E.Message{Conversation: proto.String(text)}
 					return nil
 				},
 			},
@@ -132,12 +112,13 @@ func main() {
 				Name:  "getgroups",
 				Usage: "print all available group info",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
+					fmt.Println(client.GetJoinedGroups())
 					return nil
 				},
 			},
 			{
 				Name:  "poll",
-				Usage: "send a poll using <JID> <HEADER> <OPTIONS>",
+				Usage: "send a poll using <JID> <HEADER> <OPTIONS> ; requires a group ID",
 				Arguments: []cli.Argument{
 					&cli.StringArg{Name: "jid", Destination: &jidStr}, // use id field of group
 					&cli.StringArg{Name: "header", Destination: &header},
@@ -145,21 +126,44 @@ func main() {
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					// parse JID
-					if !strings.HasSuffix(jidStr, "@g.us") {
-						jidStr = jidStr + "@g.us"
-					}
-					var JID types.JID
-					JID, err := types.ParseJID(jidStr)
-					if err != nil {
-						log.Fatal("Failed to parse JID: ", jidStr)
-					} else {
-						log.Println("Parsed JID correctly", JID)
-					}
 					var options = strings.Fields(optionsStr)
-					sendPoll(JID, header, options)
+					message = client.BuildPollCreation(header, options, 1)
 					return nil
 				},
 			},
+		},
+		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
+			client, container, _ = initClient()
+			return nil, nil
+		},
+		After: func(ctx context.Context, cmd *cli.Command) error {
+
+			if message != nil {
+				var JID types.JID
+				JID, err := types.ParseJID(jidStr)
+				if err != nil {
+					log.Fatal("Failed to parse JID: ", jidStr)
+				} else {
+					log.Println("Parsed JID correctly", JID)
+				}
+				_, err = client.SendMessage(context.Background(), JID, message)
+				// FIXME showing error even when successful
+				if err != nil {
+					log.Println("Sent Message successfully")
+				} else {
+					fmt.Println("Failed to Send Message", err)
+
+				}
+				time.Sleep(5 * time.Second)
+			}
+			// Listen to Ctrl+C (you can also do something else that prevents the program from exiting)
+			// c := make(chan os.Signal, 1)
+			// signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+			// <-c
+
+			client.Disconnect()
+			container.Close()
+			return nil
 		},
 	}
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
