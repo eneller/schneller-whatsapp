@@ -4,12 +4,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
-	"strconv"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal/v3"
+	"github.com/urfave/cli/v3"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
@@ -26,10 +27,10 @@ func eventHandler(evt interface{}) {
 	}
 }
 
-func main() {
+func sendPoll(JID types.JID, headline string, optionNames []string) {
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
 	// Make sure you add appropriate DB connector imports, e.g. github.com/mattn/go-sqlite3 for SQLite
-	container, err := sqlstore.New("sqlite3", "file:examplestore.db?_foreign_keys=on", dbLog)
+	container, err := sqlstore.New("sqlite3", "file:sqlite3.db?_foreign_keys=on", dbLog)
 	if err != nil {
 		panic(err)
 	}
@@ -72,55 +73,15 @@ func main() {
 		}
 	}
 
-	strJID := "XXXXXXXX@g.us"
-	var gJID types.JID
-	gJID, err = types.ParseJID(strJID)
-	if err != nil {
-		fmt.Println("Failed to parse JID: ", strJID)
-	} else {
-		fmt.Println("Parsed JID correctly", gJID)
-
-	}
-
-	var optionNames []string
-	optionNames = append(optionNames, "O1")
-	optionNames = append(optionNames, "O2")
-
-	currentTime := time.Now()
-	var headline string
-
-	var daysShift int = -1
-
-	if len(os.Args) > 1 {
-		daysShift, err = strconv.Atoi(os.Args[1])
-		if err != nil {
-			fmt.Println("Failed to parse days shift param: ", os.Args[1])
-			os.Exit(-1)
-		}
-
-		fmt.Println("Parsed days shift param: ", daysShift)
-		currentTime = currentTime.AddDate(0, 0, daysShift)
-
-	} else {
-		// If after 8 AM, simply we are generating for the next day
-		if currentTime.Hour() >= 8 {
-
-			currentTime = currentTime.AddDate(0, 0, 1)
-		}
-	}
-
-	headline = "Auto-generated: " + fmt.Sprintf("%d/%d/%d", currentTime.Day(), currentTime.Month(), currentTime.Year())
-
-	fmt.Println(headline)
 	pollMessage := client.BuildPollCreation(headline, optionNames, 1)
 
-	fmt.Println("Create Poll Message succuessfully  : ", pollMessage)
+	fmt.Println("Created Poll Message succuessfully  : ", pollMessage)
 
-	_, err = client.SendMessage(context.Background(), gJID, pollMessage)
+	_, err = client.SendMessage(context.Background(), JID, pollMessage)
 	if err != nil {
-		fmt.Println("Sent Poll Succuessfully ", strJID)
+		fmt.Println("Sent Poll Succuessfully ", JID)
 	} else {
-		fmt.Println("Failed to Send Poll", gJID)
+		fmt.Println("Failed to Send Poll", JID)
 
 	}
 
@@ -132,4 +93,30 @@ func main() {
 
 	client.Disconnect()
 	container.Close()
+}
+
+func main() {
+	cmd := &cli.Command{
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			// parse JID
+			strJID := "XXXXXXXX@g.us"
+			var JID types.JID
+			JID, err := types.ParseJID(strJID)
+			if err != nil {
+				fmt.Println("Failed to parse JID: ", strJID)
+			} else {
+				fmt.Println("Parsed JID correctly", JID)
+
+			}
+			var optionNames []string
+			optionNames = append(optionNames, "O1")
+			optionNames = append(optionNames, "O2")
+			headline := "Test"
+			sendPoll(JID, headline, optionNames)
+			return nil
+		},
+	}
+	if err := cmd.Run(context.Background(), os.Args); err != nil {
+		log.Fatal(err)
+	}
 }

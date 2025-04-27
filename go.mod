@@ -16,6 +16,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/petermattis/goid v0.0.0-20250319124200-ccd6737f222a // indirect
 	github.com/rs/zerolog v1.34.0 // indirect
+	github.com/urfave/cli/v3 v3.2.0 // indirect
 	go.mau.fi/libsignal v0.1.2 // indirect
 	go.mau.fi/util v0.8.6 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
