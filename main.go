@@ -118,7 +118,7 @@ func main() {
 			},
 			{
 				Name:  "poll",
-				Usage: "send a poll using <JID> <HEADER> <OPTIONS> ; requires a group ID",
+				Usage: "send a poll using <JID> <HEADER> <OPTIONS>",
 				Arguments: []cli.Argument{
 					&cli.StringArg{Name: "jid", Destination: &jidStr}, // use id field of group
 					&cli.StringArg{Name: "header", Destination: &header},
