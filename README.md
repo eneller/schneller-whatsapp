@@ -4,5 +4,20 @@ CLI Whatsapp Polls using go:
 - [urfave/cli](https://github.com/urfave/cli) for the command line
 
 # Usage
-Simply pass the content of the `id` field of your group as CLI argument.
-Can be easily scheduled using `crontab` because of its non-interactive operation.
+Can be easily scheduled using `crontab` because of its non-interactive operation
+```
+NAME:
+   whatsup-poll - Run WhatsApp actions from your CLI. User JID has to end with '@s.whatsapp.net', Group ID with '@g.us'
+
+USAGE:
+   whatsup-poll [global options] [command [command options]]
+
+COMMANDS:
+   message    send a message using <JID> <MESSAGE>
+   getgroups  print all available group info
+   poll       send a poll using <JID> <HEADER> <OPTIONS> ; requires a group ID
+   help, h    Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --help, -h  show help
+```
