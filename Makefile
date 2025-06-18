@@ -1,5 +1,5 @@
 CC=go build
-NAME=whatsup-poll
+NAME=schneller_whatsapp
 default: build
 
 build:
