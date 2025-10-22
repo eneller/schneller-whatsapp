@@ -111,7 +111,7 @@ func main() {
 				Name:  "getgroups",
 				Usage: "print all available group info",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					fmt.Println(client.GetJoinedGroups())
+					fmt.Println(client.GetJoinedGroups(ctx))
 					return nil
 				},
 			},
