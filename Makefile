@@ -12,5 +12,9 @@ update:
 	go get -u go.mau.fi/whatsmeow
 	go mod tidy
 
+update-all:
+	go get -u
+	go mod tidy
+
 clean: 
 	git clean -fX

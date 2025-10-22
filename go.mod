@@ -5,8 +5,8 @@ go 1.24.2
 require (
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/mdp/qrterminal/v3 v3.2.1
-	github.com/urfave/cli/v3 v3.4.1
-	go.mau.fi/whatsmeow v0.0.0-20251016095441-02c50743e601
+	github.com/urfave/cli/v3 v3.5.0
+	go.mau.fi/whatsmeow v0.0.0-20251022100208-a81333ed9f79
 	google.golang.org/protobuf v1.36.10
 )
 
@@ -24,7 +24,7 @@ require (
 	go.mau.fi/libsignal v0.2.1 // indirect
 	go.mau.fi/util v0.9.2 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
-	golang.org/x/exp v0.0.0-20251009144603-d2f985daa21b // indirect
+	golang.org/x/exp v0.0.0-20251017212417-90e834f514db // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/term v0.36.0 // indirect
