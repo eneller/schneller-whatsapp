@@ -1,0 +1,10 @@
+name: build
+on:
+    push:
+        branches:
+            - main
+jobs:
+    build_x86:
+        runs-on: [amd64]
+        steps:
+            - run: make
