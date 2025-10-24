@@ -2,12 +2,14 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
+	"github.com/google/shlex"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mdp/qrterminal/v3"
 	"github.com/urfave/cli/v3"
@@ -78,6 +80,25 @@ func initClient() (*whatsmeow.Client, *sqlstore.Container, waLog.Logger) {
 	return client, container, dbLog
 }
 
+func sendMessage(message *waE2E.Message, jidStr string, client *whatsmeow.Client) {
+	if message != nil {
+		var JID types.JID
+		JID, err := types.ParseJID(jidStr)
+		if err != nil {
+			log.Fatal("Failed to parse JID: ", jidStr)
+		} else {
+			log.Println("Parsed JID correctly", JID)
+		}
+		_, err = client.SendMessage(context.Background(), JID, message)
+		// FIXME showing error even when successful
+		if err == nil {
+			log.Println("Sent Message successfully")
+		} else {
+			fmt.Println("Failed to Send Message", err)
+
+		}
+	}
+}
 func main() {
 	var jidStr, header, text string
 	var message *waE2E.Message
@@ -85,7 +106,32 @@ func main() {
 	var container *sqlstore.Container
 	//var dbLog waLog.Logger
 	cmd := &cli.Command{
-		Usage: "Run WhatsApp actions from your CLI. User JID has to end with '@s.whatsapp.net', Group ID with '@g.us'",
+		Usage: "Run WhatsApp actions from your CLI. User JID has to end with '@s.whatsapp.net', Group ID with '@g.us'." +
+			"Defaults to listening on stdin for batch processing.",
+		Action: func(ctx context.Context, cmd *cli.Command) error {
+			fmt.Println("No command specified. Reading from stdin. Press Ctrl+D to exit or run with --help to get help.")
+			scanner := bufio.NewScanner(os.Stdin)
+			for scanner.Scan() {
+				if err := scanner.Err(); err != nil {
+					fmt.Fprintf(os.Stderr, "Error reading: %v\n", err)
+					continue
+				}
+				args, err := shlex.Split(scanner.Text())
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error parsing command: %v\n", err)
+					continue
+				}
+				fmt.Println(args)
+				subcmd := cmd.Command(args[0])
+				if subcmd != nil {
+					subcmd.Run(ctx, args)
+				} else {
+					fmt.Fprintf(os.Stderr, "Unknown command: %s\n", args[0])
+				}
+			}
+			fmt.Println("Stdin closed.")
+			return nil
+		},
 		Commands: []*cli.Command{
 			{
 				Name:  "message",
@@ -95,15 +141,8 @@ func main() {
 					&cli.StringArg{Name: "message", Destination: &text},
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					// parse JID
-					var JID types.JID
-					JID, err := types.ParseJID(jidStr)
-					if err != nil {
-						log.Fatal("Failed to parse JID: ", jidStr)
-					} else {
-						log.Println("Parsed JID correctly", JID)
-					}
 					message = &waE2E.Message{Conversation: proto.String(text)}
+					sendMessage(message, jidStr, client)
 					return nil
 				},
 			},
@@ -126,45 +165,18 @@ func main() {
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					// parse JID
 					message = client.BuildPollCreation(header, cmd.StringArgs("options"), 1)
+					sendMessage(message, jidStr, client)
 					return nil
 				},
 			},
 		},
-		Before: func(ctx context.Context, cmd *cli.Command) (context.Context, error) {
-			client, container, _ = initClient()
-			return nil, nil
-		},
-		After: func(ctx context.Context, cmd *cli.Command) error {
-
-			if message != nil {
-				var JID types.JID
-				JID, err := types.ParseJID(jidStr)
-				if err != nil {
-					log.Fatal("Failed to parse JID: ", jidStr)
-				} else {
-					log.Println("Parsed JID correctly", JID)
-				}
-				_, err = client.SendMessage(context.Background(), JID, message)
-				// FIXME showing error even when successful
-				if err != nil {
-					log.Println("Sent Message successfully")
-				} else {
-					fmt.Println("Failed to Send Message", err)
-
-				}
-				time.Sleep(5 * time.Second)
-			}
-			// Listen to Ctrl+C (you can also do something else that prevents the program from exiting)
-			// c := make(chan os.Signal, 1)
-			// signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-			// <-c
-
-			client.Disconnect()
-			container.Close()
-			return nil
-		},
 	}
-	if err := cmd.Run(context.Background(), os.Args); err != nil {
-		log.Fatal(err)
-	}
+	// before
+	client, container, _ = initClient()
+	// run
+	cmd.Run(context.Background(), os.Args)
+	// after
+	time.Sleep(5 * time.Second)
+	client.Disconnect()
+	container.Close()
 }

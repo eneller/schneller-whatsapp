@@ -7,7 +7,7 @@ CLI Whatsapp Messages (and Polls) using go:
 Can be easily scheduled using `crontab` because of its non-interactive operation
 ```
 NAME:
-   schneller-whatsapp - Run WhatsApp actions from your CLI. User JID has to end with '@s.whatsapp.net', Group ID with '@g.us'
+   schneller-whatsapp - Run WhatsApp actions from your CLI. User JID has to end with '@s.whatsapp.net', Group ID with '@g.us'. Defaults to listening on stdin for batch processing.
 
 USAGE:
    schneller-whatsapp [global options] [command [command options]]

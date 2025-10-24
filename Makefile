@@ -5,6 +5,9 @@ default: build
 build:
 	$(CC)
 
+run:
+	go run .
+
 arm:
 	env CGO_ENABLED=1 GOOS=linux GOARCH=arm64 $(CC) -o $(NAME)-arm64
 
