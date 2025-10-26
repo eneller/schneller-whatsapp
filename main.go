@@ -117,7 +117,7 @@ func main() {
 					continue
 				}
 				args, err := shlex.Split(scanner.Text())
-				if err != nil {
+				if err != nil || len(args) == 0 {
 					fmt.Fprintf(os.Stderr, "Error parsing command: %v\n", err)
 					continue
 				}
