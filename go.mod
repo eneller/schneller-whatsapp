@@ -3,10 +3,11 @@ module github.com/eneller/schneller-whatsapp
 go 1.24.2
 
 require (
+	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/mdp/qrterminal/v3 v3.2.1
 	github.com/urfave/cli/v3 v3.5.0
-	go.mau.fi/whatsmeow v0.0.0-20251023183934-2ced35dd7e8c
+	go.mau.fi/whatsmeow v0.0.0-20251024191251-088fa33fb87f
 	google.golang.org/protobuf v1.36.10
 )
 
@@ -14,7 +15,6 @@ require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/beeper/argo-go v1.1.2 // indirect
 	github.com/elliotchance/orderedmap/v3 v3.1.0 // indirect
-	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect

@@ -1,9 +1,9 @@
 CC=go build
-NAME=schneller_whatsapp
+NAME=schneller-whatsapp
 default: build
 
 build:
-	$(CC)
+	$(CC) -o $(NAME)
 
 run:
 	go run .
@@ -18,6 +18,11 @@ update:
 update-all:
 	go get -u
 	go mod tidy
+
+deploy:
+	rsync $(NAME) jojo:$(NAME)
+
+upgrade: update deploy
 
 clean: 
 	git clean -fX
