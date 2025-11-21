@@ -5,7 +5,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -22,6 +22,7 @@ import (
 )
 
 func initClient() (*whatsmeow.Client, *sqlstore.Container, waLog.Logger) {
+	//TODO use stderr here
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
 	// Make sure you add appropriate DB connector imports, e.g. github.com/mattn/go-sqlite3 for SQLite
 	container, err := sqlstore.New(context.Background(), "sqlite3", "file:sqlite3.db?_foreign_keys=on", dbLog)
@@ -38,7 +39,7 @@ func initClient() (*whatsmeow.Client, *sqlstore.Container, waLog.Logger) {
 
 	// handle login via QR
 	if client.Store.ID == nil {
-		fmt.Println("Client store ID is nil, scanning QR")
+		slog.Info("Client store ID is nil, scanning QR")
 		// No ID stored, new login
 		qrChan, _ := client.GetQRChannel(context.Background())
 		err = client.Connect()
@@ -51,14 +52,14 @@ func initClient() (*whatsmeow.Client, *sqlstore.Container, waLog.Logger) {
 				// e.g. qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
 				qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
 				// or just manually `echo 2@... | qrencode -t ansiutf8` in a terminal
-				fmt.Println("QR code:", evt.Code)
+				fmt.Println("QR code: ", evt.Code)
 			} else {
-				fmt.Println("Login event:", evt.Event)
+				slog.Debug("Login event", "event", evt.Event)
 			}
 		}
 	} else {
 		// Already logged in, just connect
-		fmt.Println("Connecting")
+		slog.Info("Connecting")
 
 		err = client.Connect()
 		if err != nil {
@@ -73,16 +74,16 @@ func sendMessage(message *waE2E.Message, jidStr string, client *whatsmeow.Client
 		var JID types.JID
 		JID, err := types.ParseJID(jidStr)
 		if err != nil {
-			log.Fatal("Failed to parse JID: ", jidStr)
+			slog.Error("Failed to parse", "JID", jidStr)
 		} else {
-			log.Println("Parsed JID correctly", JID)
+			slog.Info("Parsed correctly", "JID", JID)
 		}
 		_, err = client.SendMessage(context.Background(), JID, message)
 		// FIXME showing error even when successful
 		if err == nil {
-			log.Println("Sent Message successfully")
+			slog.Info("Sent Message successfully")
 		} else {
-			fmt.Println("Failed to Send Message", err)
+			slog.Error("Failed to send message", "error", err)
 
 		}
 	}
@@ -101,20 +102,19 @@ func main() {
 			scanner := bufio.NewScanner(os.Stdin)
 			for scanner.Scan() {
 				if err := scanner.Err(); err != nil {
-					fmt.Fprintf(os.Stderr, "Error reading: %v\n", err)
+					slog.Error("Error reading", "error", err)
 					continue
 				}
 				args, err := shlex.Split(scanner.Text())
 				if err != nil || len(args) == 0 {
-					fmt.Fprintf(os.Stderr, "Error parsing command: %v\n", err)
+					slog.Error("Error parsing command", "command", err)
 					continue
 				}
-				fmt.Println(args)
 				subcmd := cmd.Command(args[0])
 				if subcmd != nil {
 					subcmd.Run(ctx, args)
 				} else {
-					fmt.Fprintf(os.Stderr, "Unknown command: %s\n", args[0])
+					slog.Error("Unknown command", "command", args[0])
 				}
 			}
 			fmt.Println("Stdin closed.")
@@ -138,7 +138,14 @@ func main() {
 				Name:  "getgroups",
 				Usage: "print all available group info",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					fmt.Println(client.GetJoinedGroups(ctx))
+					groups, err := client.GetJoinedGroups(ctx)
+					if err != nil {
+						slog.Error("Failed to fetch group info", "error", err)
+					} else {
+						for _, item := range groups {
+							fmt.Println(*item)
+						}
+					}
 					return nil
 				},
 			},
