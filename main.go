@@ -17,19 +17,9 @@ import (
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
-	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
 	"google.golang.org/protobuf/proto"
 )
-
-func eventHandler(evt interface{}) {
-	switch v := evt.(type) {
-	case *events.Message:
-		fmt.Println("Received a message from !", v.Info.Sender)
-
-		fmt.Println("Received a message!", v.Message.GetConversation())
-	}
-}
 
 func initClient() (*whatsmeow.Client, *sqlstore.Container, waLog.Logger) {
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
@@ -44,9 +34,7 @@ func initClient() (*whatsmeow.Client, *sqlstore.Container, waLog.Logger) {
 	if err != nil {
 		panic(err)
 	}
-	clientLog := waLog.Stdout("Client", "DEBUG", true)
-	client := whatsmeow.NewClient(deviceStore, clientLog)
-	client.AddEventHandler(eventHandler)
+	client := whatsmeow.NewClient(deviceStore, nil)
 
 	// handle login via QR
 	if client.Store.ID == nil {
