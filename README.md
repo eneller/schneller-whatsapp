@@ -4,7 +4,8 @@ CLI Whatsapp Messages (and Polls) using go:
 - [urfave/cli](https://github.com/urfave/cli) for the command line
 
 # Usage
-Can be easily scheduled using `crontab` because of its non-interactive operation
+Can be easily scheduled using `crontab` because of its non-interactive operation.
+Avoid quick consecutive logins by using the stdin option to send multiple messages in one session.
 ```
 NAME:
    schneller-whatsapp - Run WhatsApp actions from your CLI. User JID has to end with '@s.whatsapp.net', Group ID with '@g.us'. Defaults to listening on stdin for batch processing.

@@ -80,10 +80,10 @@ func sendMessage(message *waE2E.Message, jidStr string, client *whatsmeow.Client
 		}
 		_, err = client.SendMessage(context.Background(), JID, message)
 		// FIXME showing error even when successful
-		if err == nil {
-			slog.Info("Sent Message successfully")
-		} else {
+		if err != nil {
 			slog.Error("Failed to send message", "error", err)
+		} else {
+			slog.Info("Sent Message successfully")
 
 		}
 	}
