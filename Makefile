@@ -1,12 +1,13 @@
 CC=go build
 NAME=schneller-whatsapp
+SRCDIR=./src
 default: build
 
 build:
-	$(CC) -o $(NAME)
+	$(CC) -o $(NAME) $(SRCDIR)
 
 run:
-	go run .
+	go run $(SRCDIR)
 
 arm:
 	env CGO_ENABLED=1 GOOS=linux GOARCH=arm64 $(CC) -o $(NAME)-arm64
