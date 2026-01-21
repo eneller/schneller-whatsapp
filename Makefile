@@ -23,7 +23,12 @@ update-all:
 deploy:
 	rsync $(NAME) jojo:$(NAME)
 
-upgrade: update deploy
+test-remote:
+	ssh jojo 'cd $(NAME) && ./test.sh'
+
+upgrade: update build deploy
+
+cicd: upgrade test-remote
 
 clean: 
 	git clean -fX
