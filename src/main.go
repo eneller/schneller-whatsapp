@@ -97,6 +97,13 @@ func main() {
 	cmd := &cli.Command{
 		Usage: "Run WhatsApp actions from your CLI. User JID has to end with '@s.whatsapp.net', Group ID with '@g.us'." +
 			"Defaults to listening on stdin for batch processing.",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:    "pin",
+				Aliases: []string{"p"},
+				Usage:   "Pin the message in a group chat",
+			},
+		},
 		Action: func(ctx context.Context, cmd *cli.Command) error {
 			fmt.Println("No command specified. Reading from stdin. Press Ctrl+D to exit or run with --help to get help.")
 			scanner := bufio.NewScanner(os.Stdin)
@@ -169,6 +176,7 @@ func main() {
 	// before
 	client, container, _ = initClient()
 	// run
+	//FIXME running cmd.Run after initclient() makes it impossible to print help without logging in
 	cmd.Run(context.Background(), os.Args)
 	// after
 	time.Sleep(5 * time.Second)
