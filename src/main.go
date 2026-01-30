@@ -14,6 +14,7 @@ import (
 	"github.com/mdp/qrterminal/v3"
 	"github.com/urfave/cli/v3"
 	"go.mau.fi/whatsmeow"
+	"go.mau.fi/whatsmeow/proto/waCommon"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
@@ -69,6 +70,38 @@ func initClient() (*whatsmeow.Client, *sqlstore.Container, waLog.Logger) {
 	return client, container, dbLog
 }
 
+func sendMessage2(message *waE2E.Message, jidStr string, client *whatsmeow.Client) {
+	if message != nil {
+		var JID types.JID
+		JID, err := types.ParseJID(jidStr)
+		if err != nil {
+			slog.Error("Failed to parse", "JID", jidStr)
+		} else {
+			slog.Info("Parsed correctly", "JID", JID)
+		}
+		m, err := client.SendMessage(context.Background(), JID, message)
+		key := waCommon.MessageKey{ID: proto.String(m.ID), RemoteJID: proto.String(jidStr), FromMe: proto.Bool(true)}
+		m, err = client.SendMessage(context.Background(), JID, &waE2E.Message{
+			MessageContextInfo: &waE2E.MessageContextInfo{
+				MessageAddOnDurationInSecs: proto.Uint32(604800),
+			},
+			PinInChatMessage: &waE2E.PinInChatMessage{
+				Key: &key,
+				//Key:               client.BuildMessageKey(JID, *client.Store.ID, m.ID),
+				Type:              waE2E.PinInChatMessage_PIN_FOR_ALL.Enum(),
+				SenderTimestampMS: proto.Int64(time.Now().UnixMilli()),
+			},
+			EventMessage: &waE2E.EventMessage{},
+		})
+		// FIXME showing error even when successful
+		if err != nil {
+			slog.Error("Failed to send message", "error", err)
+		} else {
+			slog.Info("Sent Message successfully")
+
+		}
+	}
+}
 func sendMessage(message *waE2E.Message, jidStr string, client *whatsmeow.Client) {
 	if message != nil {
 		var JID types.JID
@@ -137,7 +170,7 @@ func main() {
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					message = &waE2E.Message{Conversation: proto.String(text)}
-					sendMessage(message, jidStr, client)
+					sendMessage2(message, jidStr, client)
 					return nil
 				},
 			},
