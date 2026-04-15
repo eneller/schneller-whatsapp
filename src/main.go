@@ -142,8 +142,10 @@ func main() {
 					if err != nil {
 						slog.Error("Failed to fetch group info", "error", err)
 					} else {
+						// log a primitve csv to stdOut
+						fmt.Printf("%q, %q, %q\n", "jid", "name", "parentJid")
 						for _, item := range groups {
-							fmt.Println(*item)
+							fmt.Printf("%q, \"%s\", %q\n", item.JID, item.GroupName.Name, item.GroupLinkedParent.LinkedParentJID)
 						}
 					}
 					return nil
