@@ -8,7 +8,9 @@ Can be easily scheduled using `crontab` because of its non-interactive operation
 Avoid quick consecutive logins by using the stdin option to send multiple messages in one session.
 ```
 NAME:
-   schneller-whatsapp - Run WhatsApp actions from your CLI. User JID has to end with '@s.whatsapp.net', Group ID with '@g.us'. Defaults to listening on stdin for batch processing.
+   schneller-whatsapp - Run WhatsApp actions from your CLI.
+   User JID has to end with '@s.whatsapp.net', Group ID with '@g.us'.
+   Defaults to listening on stdin for batch processing.
 
 USAGE:
    schneller-whatsapp [global options] [command [command options]]
