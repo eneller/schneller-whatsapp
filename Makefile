@@ -24,7 +24,7 @@ deploy:
 	rsync $(NAME) jojo:$(NAME)
 
 test-remote:
-	ssh jojo 'cd $(NAME) && ./test.sh'
+	ssh jojo 'cd $(NAME) && ./vb.sh test'
 
 upgrade: update build deploy
 
