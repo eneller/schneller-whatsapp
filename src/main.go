@@ -153,7 +153,7 @@ func main() {
 			},
 			{
 				Name:  "poll",
-				Usage: "send a poll using <JID> <HEADER> <OPTIONS>",
+				Usage: "send a poll to a group using <JID> <HEADER> <OPTIONS>",
 				Arguments: []cli.Argument{
 					&cli.StringArg{Name: "jid", Destination: &jidStr},
 					&cli.StringArg{Name: "header", Destination: &header},

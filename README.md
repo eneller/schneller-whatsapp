@@ -18,7 +18,8 @@ USAGE:
 COMMANDS:
    message    send a message using <JID> <MESSAGE>
    getgroups  print all available group info
-   poll       send a poll using <JID> <HEADER> <OPTIONS> ; requires a group ID
+   poll       send a poll to a group using <JID> <HEADER> <OPTIONS>
+   image      send an image using <JID> <PATH> <CAPTION>
    help, h    Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
