@@ -155,7 +155,7 @@ func main() {
 				Name:  "poll",
 				Usage: "send a poll using <JID> <HEADER> <OPTIONS>",
 				Arguments: []cli.Argument{
-					&cli.StringArg{Name: "jid", Destination: &jidStr}, // use id field of group
+					&cli.StringArg{Name: "jid", Destination: &jidStr},
 					&cli.StringArg{Name: "header", Destination: &header},
 					&cli.StringArgs{Name: "options", Min: 2, Max: -1},
 				},
@@ -163,6 +163,40 @@ func main() {
 					// parse JID
 					message = client.BuildPollCreation(header, cmd.StringArgs("options"), 1)
 					sendMessage(message, jidStr, client)
+					return nil
+				},
+			},
+			{
+				// send an image using https://pkg.go.dev/go.mau.fi/whatsmeow#Client.Upload
+				Name:  "image",
+				Usage: "send an image using <JID> <PATH> <CAPTION>",
+				Arguments: []cli.Argument{
+					&cli.StringArg{Name: "jid", Destination: &jidStr},
+					&cli.StringArg{Name: "path"},
+					&cli.StringArg{Name: "caption"},
+				},
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					data, err := os.ReadFile(cmd.StringArg("path"))
+					resp, err := client.Upload(ctx, data, whatsmeow.MediaImage)
+					// figure out the mimetype to specify
+					// https://stackoverflow.com/questions/51209439/mime-type-checking-of-files-uploaded-golang
+					if err != nil {
+						slog.Error("Failed to open file", "error", err)
+					}
+					imageMsg := &waE2E.ImageMessage{
+						Caption: proto.String(cmd.StringArg("caption")),
+						// TODO replace this with the actual mime type
+						Mimetype: proto.String("image/jpeg"),
+						// you can also optionally add other fields like ContextInfo and JpegThumbnail here
+
+						URL:           &resp.URL,
+						DirectPath:    &resp.DirectPath,
+						MediaKey:      resp.MediaKey,
+						FileEncSHA256: resp.FileEncSHA256,
+						FileSHA256:    resp.FileSHA256,
+						FileLength:    &resp.FileLength,
+					}
+					sendMessage(&waE2E.Message{ImageMessage: imageMsg}, jidStr, client)
 					return nil
 				},
 			},
